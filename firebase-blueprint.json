@@ -1,0 +1,122 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with research preferences and interests",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Unique Google user ID" },
+        "displayName": { "type": "string", "description": "Display name of researcher" },
+        "email": { "type": "string", "description": "User email address" },
+        "interestTrack": { "type": "string", "description": "Primary research track or domain" },
+        "researchLevel": { "type": "string", "description": "Experience level in research" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account registration timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Profile update timestamp" }
+      },
+      "required": ["userId", "displayName", "createdAt"]
+    },
+    "ProblemInvestigation": {
+      "title": "ProblemInvestigation",
+      "description": "Everyday Problems Lab guided research project",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner user ID" },
+        "title": { "type": "string", "description": "Headline of the everyday problem observed" },
+        "sector": { "type": "string", "description": "Industry or problem domain" },
+        "location": { "type": "string", "description": "Geographic location of the problem" },
+        "status": { "type": "string", "description": "Current stage of investigation" },
+        "problemStatement": { "type": "string", "description": "Step 1: Problem root cause and scope" },
+        "existingResearch": { "type": "string", "description": "Step 2: Existing literature and evidence" },
+        "unaddressedGaps": { "type": "string", "description": "Step 3: What hasn't been adequately addressed" },
+        "evidenceNotes": { "type": "string", "description": "Step 4: Field evidence and data collected" },
+        "proposedSolutions": { "type": "string", "description": "Step 5: Viable interventions and solutions" },
+        "opportunitySummary": { "type": "string", "description": "Step 6: Documented findings and opportunity brief" },
+        "evidenceCount": { "type": "integer", "description": "Number of attached evidence points" },
+        "tags": { "type": "array", "description": "Domain tags" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last modified timestamp" }
+      },
+      "required": ["userId", "title", "sector", "status", "createdAt"]
+    },
+    "FieldEvidence": {
+      "title": "FieldEvidence",
+      "description": "Supporting evidence, metrics, or field notes attached to a problem",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner user ID" },
+        "problemId": { "type": "string", "description": "Parent problem investigation ID" },
+        "title": { "type": "string", "description": "Evidence title or observation summary" },
+        "evidenceType": { "type": "string", "description": "Category of evidence" },
+        "content": { "type": "string", "description": "Detailed notes or quote" },
+        "dataValue": { "type": "string", "description": "Quantitative metric or cost datum" },
+        "locationTag": { "type": "string", "description": "Specific venue or market" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Logged timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Modified timestamp" }
+      },
+      "required": ["userId", "problemId", "title", "evidenceType", "createdAt"]
+    },
+    "LibraryItem": {
+      "title": "LibraryItem",
+      "description": "Curated research publication, case study, or paper in user library",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner user ID" },
+        "title": { "type": "string", "description": "Publication or report title" },
+        "authors": { "type": "string", "description": "Authors or institution" },
+        "publicationYear": { "type": "string", "description": "Year of publication" },
+        "source": { "type": "string", "description": "Journal, organization, or publisher" },
+        "domain": { "type": "string", "description": "Research category" },
+        "summary": { "type": "string", "description": "Executive summary" },
+        "keyFindings": { "type": "string", "description": "Key empirical findings" },
+        "simplifiedExplanation": { "type": "string", "description": "AI simplified explanation" },
+        "url": { "type": "string", "description": "Source citation link" },
+        "isBookmarked": { "type": "boolean", "description": "Saved bookmark flag" },
+        "notes": { "type": "string", "description": "User research notes" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Saved timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last updated timestamp" }
+      },
+      "required": ["userId", "title", "source", "createdAt"]
+    },
+    "TrackedOpportunity": {
+      "title": "TrackedOpportunity",
+      "description": "Research grant, fellowship, or funding opportunity tracked by user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner user ID" },
+        "opportunityId": { "type": "string", "description": "Catalog opportunity ID" },
+        "title": { "type": "string", "description": "Grant or fellowship title" },
+        "organization": { "type": "string", "description": "Funding body or university" },
+        "fundingAmount": { "type": "string", "description": "Award size or stipend" },
+        "deadline": { "type": "string", "description": "Application deadline" },
+        "category": { "type": "string", "description": "Type of opportunity" },
+        "stage": { "type": "string", "description": "User application stage" },
+        "notes": { "type": "string", "description": "Proposal notes" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Tracking started timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last updated timestamp" }
+      },
+      "required": ["userId", "opportunityId", "title", "organization", "stage", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile with research level and tracks"
+    },
+    "/users/{userId}/problems/{problemId}": {
+      "schema": "ProblemInvestigation",
+      "description": "User everyday problem investigation projects"
+    },
+    "/users/{userId}/problems/{problemId}/evidence/{evidenceId}": {
+      "schema": "FieldEvidence",
+      "description": "Field evidence data points attached to a problem"
+    },
+    "/users/{userId}/library/{itemId}": {
+      "schema": "LibraryItem",
+      "description": "Saved research papers and publication citations"
+    },
+    "/users/{userId}/tracked_opportunities/{oppId}": {
+      "schema": "TrackedOpportunity",
+      "description": "Tracked research grants and fellowship applications"
+    }
+  }
+}

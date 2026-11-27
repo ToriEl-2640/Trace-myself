@@ -1,0 +1,6 @@
+{
+  "name": "TRACE",
+  "description": "The Research & Discovery Engine for turning everyday problems into credible research and opportunities.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

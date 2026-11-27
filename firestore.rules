@@ -1,0 +1,223 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // 1. UserProfile Validation Helper
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 150)) &&
+             (!('interestTrack' in data) || (data.interestTrack is string && data.interestTrack.size() <= 100)) &&
+             (!('researchLevel' in data) || (data.researchLevel is string && data.researchLevel.size() <= 100)) &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    // 2. ProblemInvestigation Validation Helper
+    function isValidProblem(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 3 && data.title.size() <= 200 &&
+             data.sector is string && data.sector.size() >= 2 && data.sector.size() <= 100 &&
+             data.status is string && data.status.size() >= 2 && data.status.size() <= 50 &&
+             (!('location' in data) || (data.location is string && data.location.size() <= 150)) &&
+             (!('problemStatement' in data) || (data.problemStatement is string && data.problemStatement.size() <= 5000)) &&
+             (!('existingResearch' in data) || (data.existingResearch is string && data.existingResearch.size() <= 5000)) &&
+             (!('unaddressedGaps' in data) || (data.unaddressedGaps is string && data.unaddressedGaps.size() <= 5000)) &&
+             (!('evidenceNotes' in data) || (data.evidenceNotes is string && data.evidenceNotes.size() <= 5000)) &&
+             (!('proposedSolutions' in data) || (data.proposedSolutions is string && data.proposedSolutions.size() <= 5000)) &&
+             (!('opportunitySummary' in data) || (data.opportunitySummary is string && data.opportunitySummary.size() <= 5000)) &&
+             (!('evidenceCount' in data) || (data.evidenceCount is int && data.evidenceCount >= 0)) &&
+             (!('tags' in data) || (data.tags is list && data.tags.size() <= 20 && (data.tags.size() == 0 || data.tags[0] is string))) &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    // 3. FieldEvidence Validation Helper
+    function isValidFieldEvidence(data, parentProblemId) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.problemId is string && data.problemId == parentProblemId &&
+             data.title is string && data.title.size() >= 2 && data.title.size() <= 200 &&
+             data.evidenceType is string && data.evidenceType.size() >= 2 && data.evidenceType.size() <= 50 &&
+             (!('content' in data) || (data.content is string && data.content.size() <= 4000)) &&
+             (!('dataValue' in data) || (data.dataValue is string && data.dataValue.size() <= 200)) &&
+             (!('locationTag' in data) || (data.locationTag is string && data.locationTag.size() <= 150)) &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    // 4. LibraryItem Validation Helper
+    function isValidLibraryItem(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 2 && data.title.size() <= 300 &&
+             data.source is string && data.source.size() >= 1 && data.source.size() <= 150 &&
+             (!('authors' in data) || (data.authors is string && data.authors.size() <= 200)) &&
+             (!('publicationYear' in data) || (data.publicationYear is string && data.publicationYear.size() <= 20)) &&
+             (!('domain' in data) || (data.domain is string && data.domain.size() <= 100)) &&
+             (!('summary' in data) || (data.summary is string && data.summary.size() <= 4000)) &&
+             (!('keyFindings' in data) || (data.keyFindings is string && data.keyFindings.size() <= 4000)) &&
+             (!('simplifiedExplanation' in data) || (data.simplifiedExplanation is string && data.simplifiedExplanation.size() <= 4000)) &&
+             (!('url' in data) || (data.url is string && data.url.size() <= 1000)) &&
+             (!('isBookmarked' in data) || data.isBookmarked is bool) &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 3000)) &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    // 5. TrackedOpportunity Validation Helper
+    function isValidTrackedOpportunity(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.opportunityId is string && data.opportunityId.size() >= 1 && data.opportunityId.size() <= 100 &&
+             data.title is string && data.title.size() >= 2 && data.title.size() <= 200 &&
+             data.organization is string && data.organization.size() >= 1 && data.organization.size() <= 150 &&
+             data.stage is string && data.stage.size() >= 1 && data.stage.size() <= 50 &&
+             (!('fundingAmount' in data) || (data.fundingAmount is string && data.fundingAmount.size() <= 100)) &&
+             (!('deadline' in data) || (data.deadline is string && data.deadline.size() <= 100)) &&
+             (!('category' in data) || (data.category is string && data.category.size() <= 100)) &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 3000)) &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    // Collections
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'createdAt']) &&
+                       incoming().createdAt is timestamp &&
+                       incoming().createdAt <= request.time &&
+                       isValidUserProfile(incoming());
+
+      allow update: if isOwner(userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'interestTrack', 'researchLevel', 'updatedAt']);
+
+      allow delete: if isOwner(userId);
+
+      // Subcollection: Problems Lab
+      match /problems/{problemId} {
+        allow get, list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(problemId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'title', 'sector', 'status', 'createdAt']) &&
+                         incoming().createdAt is timestamp &&
+                         incoming().createdAt <= request.time &&
+                         isValidProblem(incoming());
+
+        allow update: if isOwner(userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidProblem(incoming()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'sector', 'location', 'status', 'problemStatement',
+                           'existingResearch', 'unaddressedGaps', 'evidenceNotes',
+                           'proposedSolutions', 'opportunitySummary', 'evidenceCount',
+                           'tags', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId);
+
+        // Subcollection: Field Evidence
+        match /evidence/{evidenceId} {
+          allow get, list: if isOwner(userId);
+
+          allow create: if isOwner(userId) &&
+                           isValidId(evidenceId) &&
+                           incoming().userId == request.auth.uid &&
+                           incoming().problemId == problemId &&
+                           incoming().keys().hasAll(['userId', 'problemId', 'title', 'evidenceType', 'createdAt']) &&
+                           incoming().createdAt is timestamp &&
+                           incoming().createdAt <= request.time &&
+                           isValidFieldEvidence(incoming(), problemId);
+
+          allow update: if isOwner(userId) &&
+                           incoming().userId == existing().userId &&
+                           incoming().problemId == existing().problemId &&
+                           incoming().createdAt == existing().createdAt &&
+                           isValidFieldEvidence(incoming(), problemId) &&
+                           incoming().diff(existing()).affectedKeys().hasOnly(['title', 'evidenceType', 'content', 'dataValue', 'locationTag', 'updatedAt']);
+
+          allow delete: if isOwner(userId);
+        }
+      }
+
+      // Subcollection: Research Library
+      match /library/{itemId} {
+        allow get, list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(itemId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'title', 'source', 'createdAt']) &&
+                         incoming().createdAt is timestamp &&
+                         incoming().createdAt <= request.time &&
+                         isValidLibraryItem(incoming());
+
+        allow update: if isOwner(userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidLibraryItem(incoming()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'authors', 'publicationYear', 'source', 'domain',
+                           'summary', 'keyFindings', 'simplifiedExplanation', 'url',
+                           'isBookmarked', 'notes', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId);
+      }
+
+      // Subcollection: Tracked Opportunities
+      match /tracked_opportunities/{oppId} {
+        allow get, list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(oppId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['userId', 'opportunityId', 'title', 'organization', 'stage', 'createdAt']) &&
+                         incoming().createdAt is timestamp &&
+                         incoming().createdAt <= request.time &&
+                         isValidTrackedOpportunity(incoming());
+
+        allow update: if isOwner(userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().opportunityId == existing().opportunityId &&
+                         incoming().createdAt == existing().createdAt &&
+                         isValidTrackedOpportunity(incoming()) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'organization', 'fundingAmount', 'deadline',
+                           'category', 'stage', 'notes', 'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

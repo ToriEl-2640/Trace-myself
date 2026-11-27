@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<resources>
+    <string name="firestore_database_id" translatable="false">ai-studio-android-trace-df058cb3-ecff-40ab-83e0-ccdd8a117793</string>
+    <string name="recaptcha_site_key" translatable="false">6LdH7RwuAAAAAHEWJyphlw4uUNzEwmZ6cVspp4Rm</string>
+</resources>
